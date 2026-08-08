@@ -1,4 +1,5 @@
 import { archivarFuneral } from "./archivo.js";
+import { traducirCausa } from "./causa.js";
 import { ColaDifuntos } from "./cola.js";
 import { recitarElegia } from "./elegia.js";
 import { publicar } from "./portal.js";
@@ -33,6 +34,8 @@ export class Ceremonia {
   #cola: ColaDifuntos;
   #veladosHoy = 0;
   #actual: Difunto | null = null;
+  /** Causa mostrada a los dolientes: traducida cuando es posible, original si no. */
+  #causaMostrada: string | null = null;
   #fase: FaseCeremonia = "espera";
   #corriendo = false;
 
@@ -51,7 +54,7 @@ export class Ceremonia {
       titulo: this.#actual?.titulo ?? null,
       wiki: this.#actual?.wiki ?? null,
       dominio: this.#actual?.dominio ?? null,
-      causa: this.#actual?.causa ?? null,
+      causa: this.#causaMostrada ?? this.#actual?.causa ?? null,
       horaMuerte: this.#actual?.horaMuerte ?? null,
       colaTamano: this.#cola.tamano,
       veladosHoy: this.#veladosHoy,
@@ -102,6 +105,10 @@ export class Ceremonia {
     this.#actual = difunto;
     console.log(`✝ Velando «${difunto.titulo}» (${difunto.dominio}) — ${difunto.causa}`);
 
+    // Se traduce antes de que suene la campana: la esquela entra ya en español,
+    // nunca a medias ni corrigiéndose delante de los dolientes.
+    this.#causaMostrada = await traducirCausa(difunto);
+
     await this.#anunciar("procesion");
     if (difunto.esEspanol) {
       await publicar("necrologica.es", { titulo: difunto.titulo });
@@ -134,6 +141,7 @@ export class Ceremonia {
     await dormir(CIERRE);
 
     this.#actual = null;
+    this.#causaMostrada = null;
     this.#cola.purgarMemoria();
   }
 

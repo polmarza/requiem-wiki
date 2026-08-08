@@ -88,7 +88,7 @@ docs/                         → Esta documentación
 
 | Mensaje | type | Persistente/ephemeral | Emisor | Contenido |
 |---------|------|----------------------|--------|-----------|
-| Estado del funeral | `funeral.estado` | Persistente (con `history` para late-joiners) | Solo director | id, fase, titulo, wiki, causa, hora_muerte, cola_tamano, velados_hoy |
+| Estado del funeral | `funeral.estado` | Persistente (con `history` para late-joiners) | Solo director | id, fase, titulo, wiki, causa (**traducida**, ver abajo), hora_muerte, cola_tamano, velados_hoy |
 | Trozo de elegía | `elegia.chunk` | **Ephemeral** (alta frecuencia) | Solo director | funeral_id, texto_acumulado (throttle ~400ms) |
 | Elegía completa | `elegia.completa` | Persistente | Solo director | funeral_id, texto (≤2KB: elegías de 4–6 frases caben sobradas) |
 | Flor/reacción | `reaccion` | **Ephemeral** | Dolientes | tipo (flor/vela/rezo), x |
@@ -170,8 +170,17 @@ Secretos de servidor (solo en el director y en Vercel env): `PORTAL_SECRET`,
 - **Wikimedia EventStreams** (`stream.wikimedia.org/v2/stream/page-delete`): SSE
   público sin clave. Reconexión con backoff + `Last-Event-ID` para no perder muertes
   durante cortes. Verificado: ~4 borrados/min totales, ~1/min ns=0.
-- **Claude API:** modelo rápido (Haiku 4.5) para elegías, streaming, `max_tokens`
-  corto. Elegía de respaldo local si falla o tarda >10s.
+- **Claude API:** modelo rápido (Haiku 4.5), dos llamadas independientes por funeral:
+  1. **Elegía** (`elegia.ts`): streaming, tono de oficiante, traduce el título dentro
+     de la propia narración. Respaldo local si falla o tarda >10s.
+  2. **Causa** (`causa.ts`): no-streaming, tono de registro civil (seco, sin
+     florituras), traduce la causa administrativa del borrado al español
+     preservando byte a byte cualquier `[[wiki]]` para no romper el resaltado de
+     enlaces. Corre **antes** de anunciar la fase `procesion` — la esquela entra ya
+     en español, nunca se corrige a medio mostrar. Si falla, se enseña la causa
+     original sin traducir (nunca bloquea la ceremonia). El archivo en Supabase
+     siempre guarda la causa **original**, no la traducida — la traducción es solo
+     para la vista en vivo.
 - **Supabase:** tabla `funerales` (ver data-model.md). El director escribe con service
   role; la web lee con anon key (RLS: SELECT público).
 

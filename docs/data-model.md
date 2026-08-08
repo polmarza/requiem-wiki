@@ -24,7 +24,7 @@ No hay usuarios persistentes: el doliente es un nombre efímero en la sesión.
 | fase | `'procesion' \| 'elegia' \| 'duelo' \| 'cierre' \| 'espera'` | Fase de la ceremonia |
 | titulo | string | Título del artículo difunto (con espacios, sin underscores) |
 | wiki | string | p. ej. `es.wikipedia.org` |
-| causa | string | Comentario real del administrador que borró |
+| causa | string | Causa del borrado **traducida al español** por Claude (registro civil, seca; preserva `[[wiki]]` intacto). Si la traducción falla, es la causa original sin traducir — ver `apps/director/src/causa.ts` |
 | hora_muerte | timestamp | Cuándo se borró |
 | elegia_parcial | string | Texto de la elegía escrito hasta ahora (streaming) |
 | cola_tamano | number | Almas esperando velatorio |
@@ -65,7 +65,7 @@ Archivo de todos los funerales celebrados. Escribe solo el director (service rol
 | dominio | text | `es.wikipedia.org` |
 | titulo | text | Título del artículo |
 | ns | int | Namespace (0 = artículo; 118 = borrador si se relajó el filtro) |
-| causa | text | Comentario real del borrado |
+| causa | text | Comentario real del borrado, **en su idioma original** (sin traducir — la traducción es solo para la vista en vivo, el archivo conserva el registro tal cual) |
 | usuario_admin | text | Quién lo borró (público en el stream) |
 | hora_muerte | timestamptz | Timestamp del borrado en Wikimedia |
 | elegia | text | Elegía completa generada |

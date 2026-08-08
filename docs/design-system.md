@@ -71,8 +71,11 @@ tinta oscura cálida sobre papel claro, como una esquela real.
 - **La esquela (féretro):** marco negro (`--ink`) de 6px envolviendo una tarjeta
   `--bg-raised` con borde `--ink`. Contenido: cruz †, título en Cormorant
   `clamp(24px,4.6vw,42px)`, "Falleció a las {hora} en {dominio}" en itálica, regla
-  horizontal, etiqueta "CAUSA DE LA DEFUNCIÓN, SEGÚN EL REGISTRO", causa real con la
-  sintaxis `[[wiki]]` parseada como enlaces (`--gold`, subrayado punteado), "D. E. P."
+  horizontal, etiqueta "CAUSA DE LA DEFUNCIÓN, SEGÚN EL REGISTRO", causa real
+  **traducida al español** (tono seco de registro civil, no de oficiante) con la
+  sintaxis `[[wiki]]` intacta y parseada como enlaces (`--gold`, subrayado punteado):
+  el registro habla en el idioma de quien lo consulta, igual que ya traduce el título
+  la elegía. "D. E. P."
   espaciado, cierre "Sus dolientes, presentes en esta capilla, no lo olvidan.". Debajo
   y fuera del marco: la elegía, con etiqueta "ELEGÍA · escribiéndose ahora" mientras
   se escribe y un cursor parpadeante (`.pluma`).

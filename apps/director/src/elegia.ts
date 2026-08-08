@@ -10,6 +10,9 @@ lo escribió: la gracia nace de la ternura, no del sarcasmo.
 
 Reglas:
 - De 3 a 5 frases. Ni una más.
+- Solo el texto de la elegía, nada alrededor: sin título, sin encabezado, sin
+  markdown (nada de "#", "**", listas ni comillas envolviendo todo el texto). Ni
+  siquiera "Elegía por X:" delante — el título ya está escrito arriba, en el féretro.
 - Español de España, sobrio, sin emojis ni exclamaciones.
 - Usa la causa real del borrado como si fuera la causa de la muerte.
 - No inventes datos concretos sobre el contenido del artículo: solo sabes su título
