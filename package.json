@@ -1,0 +1,11 @@
+{
+  "name": "requiem-wiki",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "director:dev": "pnpm --filter director dev",
+    "test": "pnpm -r test"
+  },
+  "packageManager": "pnpm@11.0.0"
+}
