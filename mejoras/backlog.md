@@ -1,8 +1,7 @@
 # Backlog de mejoras
 
-<!-- Ideas de mejora que no entran en el sprint actual pero que no queremos perder.
-     No es un compromiso, es un repositorio de ideas.
-     Añadir una entrada cada vez que surja una idea durante el desarrollo. -->
+Ideas de mejora que no entran ahora pero que no queremos perder. No es un compromiso,
+es un repositorio de ideas.
 
 ---
 
@@ -19,14 +18,18 @@ Descripción breve de la mejora y por qué aportaría valor.
 
 ---
 
-<!-- Ejemplo (borrar cuando haya entradas reales):
+### [MEJORA-01] Velatorio de datos white-label
+**Área:** Negocio
+**Prioridad estimada:** Baja
+**Origen:** Definición del proyecto (business.md)
 
-### [MEJORA-01] Modo oscuro
-**Área:** Frontend
-**Prioridad estimada:** Media
-**Origen:** Petición recurrente durante beta
+El formato "velatorio de X que muere en vivo" es reutilizable con otras fuentes:
+dominios caducados, repos archivados de GitHub, tweets borrados. Post-hackathon.
 
-Implementar dark mode usando las variables CSS del design system.
-Ya está parcialmente preparado con las variables de color semánticas.
+### [MEJORA-02] Salas por idioma
+**Área:** Frontend / Backend
+**Prioridad estimada:** Baja
+**Origen:** Decisión de arquitectura (canal único `capilla`)
 
--->
+Si el canal global se quedara pequeño o el público lo pidiera, capillas por idioma
+(es, en, fr…) filtrando el stream por wiki de origen.

@@ -1,84 +1,81 @@
-# project-template
+# Réquiem.wiki ✝
 
-Plantilla para empezar proyectos cuando trabajas con agentes de código (Claude Code, Cursor y compañía) sin que se pongan a escribir antes de entender qué estás construyendo.
+**El velatorio en vivo del conocimiento que muere.**
 
----
+Cada minuto, Wikipedia borra artículos para siempre. Réquiem.wiki es una capilla
+funeraria digital abierta 24/7 donde cada borrado entra, en directo, como un féretro
+con su causa de defunción real. Una IA oficia el funeral y recita una elegía única;
+los visitantes son los dolientes: su presencia son velas encendidas, sus reacciones
+son flores sobre el féretro, su chat es el libro de condolencias.
 
-## ¿Qué es esto?
-
-Una plantilla de repositorio que impone un protocolo simple: **antes de tocar código, el agente lee la documentación del proyecto**.
-
-Si los documentos están vacíos, empieza haciendo preguntas — no escribiendo código. Si están rellenos, arranca con todo el contexto cargado y sin tener que volver a explicárselo en cada sesión.
-
-Es agnóstica al stack. El protocolo funciona igual con Next.js, Astro, FastAPI o cualquier otra cosa que decidas usar.
+Proyecto construido para **The Realtime Hackathon** (Portal, 7–9 agosto 2026).
 
 ---
 
-## ¿Para quién es?
+## Qué problema resuelve
 
-- Founders y equipos pequeños que construyen productos con ayuda de agentes de IA y quieren reducir el rework.
-- Cualquiera que se haya cansado de explicarle al modelo el mismo contexto en cada conversación nueva.
+Ninguno utilitario — crea un ritual. El borrado de conocimiento es un evento
+administrativo invisible; Réquiem.wiki le da testigo, compañía y despedida. Eres
+literalmente la última persona del planeta que verá ese título.
 
----
+En términos del hackathon: tiempo real (Portal) + IA (Claude) generando peso emocional
+colectivo a partir de un feed técnico real (Wikimedia EventStreams).
 
-## ¿Qué hay dentro?
+## Cómo funciona
 
-- **`CLAUDE.md`** — Contrato de entrada para el agente. Define qué leer, cómo registrar cambios, cómo configurar los MCPs del stack, qué no hacer y cuándo ejecutar revisiones de seguridad.
-- **`docs/`** — Ocho archivos vivos que capturan las decisiones que típicamente se pierden entre conversaciones: producto, arquitectura, modelo de datos, design system, business, roadmap, flujos de usuario y testing.
-- **`changelog/`** — Registro estructurado de cada cambio importante: qué, cuándo y por qué. **Llega vacío**: solo con el archivo que explica el formato.
-- **`mejoras/`** — Backlog de ideas que no entran en el sprint actual pero no se quieren perder.
-- **`.claude/`** — Configuración de Claude Code con permisos sensatos y slash commands custom para no tener que recordar el protocolo de memoria.
-- **`.github/`** — Plantillas de pull request e issues alineadas con el protocolo.
-- **`.template/`** — Historial de la plantilla en sí. Se borra al inicializar tu proyecto, así no arrastras cambios que no son tuyos.
-- Lo aburrido pero necesario: `.gitignore`, `.env.example`, `LICENSE`.
+```
+Wikimedia EventStreams (SSE page-delete)
+        │
+        ▼
+  Director de ceremonias (Node, long-lived) ──── Claude API (elegías en streaming)
+        │                                            │
+        ▼                                            ▼
+  Portal (canal `capilla`) ◄──────────────── estado canónico del funeral
+        │
+        ▼
+  Dolientes (Next.js en Vercel): velas de presencia, flores, condolencias
+```
 
----
+Detalle completo en [docs/architecture.md](docs/architecture.md).
 
-## ¿Cómo funciona el protocolo?
+## Requisitos previos
 
-1. **Cualquier sesión empieza leyendo `docs/`.** Si están vacíos o incompletos, el agente pregunta antes de actuar.
-2. **Cada cambio importante deja registro en `changelog/`** con qué se hizo, qué se modificó y por qué.
-3. **Si el cambio afecta a algo documentado, se actualiza el doc en la misma sesión.** No hay documentación desincronizada.
-4. **Con el stack ya decidido, el agente pregunta qué MCPs quieres** y con qué alcance: los globales que ya tengas, o servidores configurados a nivel de proyecto en `.mcp.json`. No instala nada por su cuenta ni antes de que haya stack.
-5. **Antes de mergear a producción**, se ejecuta `/security-review` para detectar vulnerabilidades, credenciales filtradas y problemas comunes.
-6. **Las ideas que no entran ahora se anotan en `mejoras/`** sin interrumpir el flujo actual.
+- Node 20+ y **pnpm v11** (no npm, no yarn)
+- Cuenta de Portal ([useportal.co](https://useportal.co)) con proyecto creado
+- Clave de API de Anthropic
+- Proyecto de Supabase (tabla `funerales`, ver [docs/data-model.md](docs/data-model.md))
 
----
+## Variables de entorno
 
-## ¿Cómo empezar?
+Copia `.env.example` a `.env.local` y rellena los valores. Nunca comitees credenciales.
 
-1. Usa este repo como plantilla en GitHub (botón **"Use this template"**) o clónalo directamente.
-2. Abre el proyecto en Claude Code, Cursor o el agente que prefieras.
-3. Cuando el agente lea `CLAUDE.md` por primera vez, te preguntará qué quieres construir y para quién. Responde y deja que vaya completando los docs contigo, uno a uno.
-4. Con los docs rellenos, el agente **inicializa el proyecto**: reescribe este README para tu producto, rellena los datos de `CLAUDE.md`, ajusta la licencia y `.env.example`, borra `.template/` y deja el changelog con su primera entrada real. Lo hace solo; si quieres forzarlo, usa `/init-proyecto`.
-5. A partir de ahí, arranca el desarrollo. Cada sesión nueva entra ya con todo el contexto cargado.
+## Instalación y desarrollo
 
----
+```bash
+pnpm install
+pnpm dev            # web (Next.js) en localhost:3000
+pnpm director:dev   # director de ceremonias en local
+```
 
-## Convenciones
+## Estructura de carpetas
 
-- Gestor de paquetes: **pnpm v11** (no npm, no yarn).
-- El resto de convenciones (idioma, naming, estilo) se decide al rellenar `CLAUDE.md` y `docs/architecture.md`.
+```
+apps/web/        → Next.js: portada y capilla (Vercel)
+apps/director/   → Proceso Node: stream de Wikimedia, cola, ceremonias, elegías (Railway)
+docs/            → Documentación viva del proyecto (leer antes de tocar código)
+changelog/       → Registro de cambios importantes
+mejoras/         → Backlog de ideas
+```
 
----
+## Cómo contribuir
 
-## Adaptar para tu proyecto
+Este repo se trabaja con agentes de código siguiendo el protocolo de `CLAUDE.md`:
+leer `docs/` antes de actuar, registrar cambios en `changelog/`, mantener la
+documentación sincronizada y pasar `/security-review` antes de mergear.
 
-No tienes que hacerlo a mano: el agente lo hace en la inicialización, siguiendo el checklist de la sección "Inicialización del proyecto" de `CLAUDE.md`. Lo que cambia:
+## Estado del proyecto
 
-| Archivo | Qué pasa con él |
-|---------|-----------------|
-| `README.md` | Se reescribe entero para tu producto (este texto desaparece) |
-| `CLAUDE.md` | Se rellenan nombre, stack, estructura y convenciones |
-| `LICENSE` | Se sustituyen `[YEAR]` y `[AUTHOR]` |
-| `.env.example` | Se queda solo con las variables de tu stack |
-| `changelog/` | Recibe la primera entrada real del proyecto |
-| `mejoras/backlog.md` | Se limpia el ejemplo |
-| `.template/` | Se borra |
-
-El criterio es simple: cuando termina la inicialización, **ningún archivo del repo se describe a sí mismo como plantilla**. Todo habla de tu proyecto.
-
----
+🚧 **En construcción durante el hackathon** — deadline: 9 de agosto de 2026, 10:00 UTC-5.
 
 ## Licencia
 
