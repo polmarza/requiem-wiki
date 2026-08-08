@@ -8,29 +8,46 @@ export interface FlorCayendo {
   x: number;
 }
 
-const GLIFO: Record<TipoReaccion, string> = {
-  flor: "🌹",
-  vela: "🕯️",
-  rezo: "🙏",
-};
+/** Cada ofrenda se comporta distinto: la flor cae, el rezo asciende, la vela se posa y prende. */
+function Ofrenda({ tipo, x, id }: { tipo: TipoReaccion; x: number; id: number }) {
+  if (tipo === "flor") {
+    return (
+      <span
+        className="flor-cae absolute top-[4%] select-none text-rose"
+        style={{ left: `${x}%`, fontSize: `${17 + (id % 3) * 3}px` }}
+      >
+        ❀
+      </span>
+    );
+  }
+  if (tipo === "rezo") {
+    return (
+      <span
+        className="rezo-sube absolute bottom-[18%] select-none text-gold text-[15px]"
+        style={{ left: `${x}%` }}
+      >
+        ✦
+      </span>
+    );
+  }
+  return (
+    <div
+      className="vela-posa absolute bottom-[26%] w-[9px] h-3.5"
+      style={{
+        left: `${x}%`,
+        background:
+          "radial-gradient(circle at 50% 75%, var(--candle) 0%, var(--candle-deep) 55%, transparent 78%)",
+        borderRadius: "50% 50% 50% 50% / 62% 62% 38% 38%",
+      }}
+    />
+  );
+}
 
-/** Las ofrendas de todos los dolientes, cayendo sobre el féretro a la vez. */
 export function Flores({ flores }: { flores: FlorCayendo[] }) {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
       {flores.map((f) => (
-        <span
-          key={f.key}
-          className="flor-cae absolute top-0 text-2xl select-none"
-          style={
-            {
-              left: `${f.x * 100}%`,
-              "--giro": `${(f.key % 2 ? 1 : -1) * (25 + (f.key % 40))}deg`,
-            } as React.CSSProperties
-          }
-        >
-          {GLIFO[f.tipo]}
-        </span>
+        <Ofrenda key={f.key} tipo={f.tipo} x={f.x} id={f.key} />
       ))}
     </div>
   );

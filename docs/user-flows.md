@@ -13,13 +13,15 @@ estados. Cada flujo tiene un ID referenciable desde código y PRD.
 
 ### Pasos
 
-1. Portada mínima: "Cada minuto, Wikipedia borra conocimiento para siempre. Alguien
-   tenía que velarlo." + input "Enciende tu vela" (nombre) + botón entrar.
-2. Escribe un nombre (o acepta el sugerido, p. ej. "Doliente nº 47") y entra.
+1. Portada mínima: "Cada minuto, Wikipedia borra artículos para siempre. Aquí se les
+   vela en directo, en el instante exacto de su muerte." + input "Tu nombre
+   (opcional)" + botón "Entrar a la capilla".
+2. Escribe un nombre (o acepta el sugerido, p. ej. "Doliente #47") y entra.
 3. Transición a la capilla: su vela se enciende con flicker; los demás la ven aparecer.
-4. Ve el funeral en curso en el estado exacto en que está (féretro actual + elegía ya
+4. Ve el funeral en curso en el estado exacto en que está (esquela actual + elegía ya
    escrita hasta ese punto), no desde el principio.
-5. El primer gesto (clic/tap) desbloquea el audio (campana/órgano), con mute visible.
+5. El primer gesto (clic/tap) desbloquea el audio (campana/ofrendas), con toggle de
+   sonido visible desde el primer segundo.
 
 ### Diagrama
 

@@ -2,7 +2,7 @@
 
 import { useChannel } from "@portalsdk/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { arrancarOrgano, pararOrgano, tanerCampana } from "@/lib/campanas";
+import { tanerCampana, tanerOfrenda } from "@/lib/campanas";
 import { CANAL_CAPILLA } from "@/lib/portal";
 import { ESTADO_INICIAL, type EstadoFuneral, type TipoReaccion } from "@/lib/tipos";
 import { Feretro } from "./Feretro";
@@ -11,10 +11,10 @@ import { LibroCondolencias, type Condolencia } from "./LibroCondolencias";
 import { Vela } from "./Vela";
 
 const OFICIANTE = "oficiante";
-const OFRENDAS: { tipo: TipoReaccion; glifo: string; etiqueta: string }[] = [
-  { tipo: "flor", glifo: "🌹", etiqueta: "Dejar una flor" },
-  { tipo: "vela", glifo: "🕯️", etiqueta: "Encender una vela" },
-  { tipo: "rezo", glifo: "🙏", etiqueta: "Rezar" },
+const OFRENDAS: { tipo: TipoReaccion; glifo: string; etiqueta: string; color: string }[] = [
+  { tipo: "flor", glifo: "❀", etiqueta: "Dejar una flor", color: "text-rose" },
+  { tipo: "vela", glifo: "", etiqueta: "Encender una vela", color: "" },
+  { tipo: "rezo", glifo: "✦", etiqueta: "Rezar", color: "text-gold" },
 ];
 
 interface MensajeCapilla {
@@ -27,7 +27,10 @@ export function Capilla({ nombre }: { nombre: string }) {
   const [flores, setFlores] = useState<FlorCayendo[]>([]);
   const [necrologica, setNecrologica] = useState<string | null>(null);
   const [sonido, setSonido] = useState(false);
+  const [contadores, setContadores] = useState({ flor: 0, vela: 0, rezo: 0 });
+  const [campanadaKey, setCampanadaKey] = useState(0);
   const contadorFlor = useRef(0);
+  const funeralIdRef = useRef<string | null>(null);
 
   const alMensaje = useCallback((msg: {
     type?: string;
@@ -58,7 +61,8 @@ export function Capilla({ nombre }: { nombre: string }) {
         const x = typeof contenido.x === "number" ? contenido.x : Math.random();
         const key = ++contadorFlor.current;
         setFlores((f) => [...f, { key, tipo, x }]);
-        setTimeout(() => setFlores((f) => f.filter((i) => i.key !== key)), 3600);
+        setTimeout(() => setFlores((f) => f.filter((i) => i.key !== key)), 4600);
+        setContadores((c) => ({ ...c, [tipo]: c[tipo] + 1 }));
         return;
       }
     }
@@ -102,6 +106,38 @@ export function Capilla({ nombre }: { nombre: string }) {
   const chunkVigente = chunkElegia?.id === estado.id ? chunkElegia.texto : "";
   const elegia = elegiaCompleta || chunkVigente;
   const escribiendo = !elegiaCompleta && Boolean(chunkVigente);
+  const pensando = estado.fase === "elegia" && !elegia;
+
+  // Un funeral nuevo reinicia el contador de ofrendas y hace sonar la campana.
+  useEffect(() => {
+    if (funeralIdRef.current === estado.id) return;
+    funeralIdRef.current = estado.id;
+    setContadores({ flor: 0, vela: 0, rezo: 0 });
+  }, [estado.id]);
+
+  const ultimoTanido = useRef<string | null>(null);
+  useEffect(() => {
+    if (!estado.id || estado.fase !== "procesion") return;
+    if (ultimoTanido.current === estado.id) return;
+    ultimoTanido.current = estado.id;
+    setCampanadaKey((k) => k + 1);
+    if (sonido) tanerCampana();
+  }, [estado.id, estado.fase, sonido]);
+
+  // Cuánto lleva la capilla en silencio, para la nota al pie de "espera".
+  const [esperaSeg, setEsperaSeg] = useState(0);
+  const esperaDesde = useRef(Date.now());
+  useEffect(() => {
+    if (estado.fase !== "espera") {
+      esperaDesde.current = Date.now();
+      setEsperaSeg(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setEsperaSeg(Math.floor((Date.now() - esperaDesde.current) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [estado.fase]);
 
   // El título de la pestaña avisa aunque el doliente esté en otra ventana.
   useEffect(() => {
@@ -109,26 +145,6 @@ export function Capilla({ nombre }: { nombre: string }) {
       ? "✝ Ha muerto un artículo en español"
       : "Réquiem.wiki — el velatorio del conocimiento";
   }, [necrologica]);
-
-  // La campana suena cuando entra un féretro nuevo, no en cada cambio de fase.
-  const ultimoTanido = useRef<string | null>(null);
-  useEffect(() => {
-    if (!sonido || !estado.id || estado.fase !== "procesion") return;
-    if (ultimoTanido.current === estado.id) return;
-    ultimoTanido.current = estado.id;
-    tanerCampana();
-  }, [estado.id, estado.fase, sonido]);
-
-  function alternarSonido() {
-    if (sonido) {
-      pararOrgano();
-      setSonido(false);
-    } else {
-      arrancarOrgano();
-      tanerCampana();
-      setSonido(true);
-    }
-  }
 
   const dolientes = useMemo(() => {
     if (presence?.kind !== "detailed") return null;
@@ -143,6 +159,7 @@ export function Capilla({ nombre }: { nombre: string }) {
 
   const numeroVelas =
     presence?.kind === "detailed" ? presence.participants.length : presence?.count ?? 1;
+  const modoRecuento = dolientes ? dolientes.length > 12 : true;
 
   const condolencias = useMemo<Condolencia[]>(
     () =>
@@ -160,99 +177,163 @@ export function Capilla({ nombre }: { nombre: string }) {
     [messages],
   );
 
+  const conectado = status === "ready";
+  const degradada = !conectado;
+
   function ofrendar(tipo: TipoReaccion) {
+    if (degradada) return;
     void send({
       type: "reaccion",
-      content: { tipo, x: 0.12 + Math.random() * 0.76 },
+      content: { tipo, x: 6 + Math.random() * 86 },
       ephemeral: true,
     });
+    if (sonido) tanerOfrenda();
   }
 
   function firmar(texto: string) {
+    if (degradada) return;
     void send({ content: { nombre, texto } });
   }
 
-  const conectado = status === "ready";
+  const fechaHoy = useMemo(
+    () =>
+      new Date().toLocaleDateString("es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    [],
+  );
 
   return (
-    <div className="nave flex-1 flex flex-col lg:flex-row min-h-0">
-      <div className="relative flex-1 flex flex-col min-h-0">
-        <header className="flex items-center justify-between px-4 py-3 text-[11px] text-ink-dim shrink-0">
-          <span className="flex items-center gap-2">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                conectado ? "bg-live punto-vivo" : "bg-ink-dim"
-              }`}
-            />
-            {conectado ? "En directo" : "Velando en silencio"}
-          </span>
-          <span className="font-lapida text-sm text-ink-dim">Réquiem.wiki</span>
-          <span className="flex items-center gap-3">
-            <span>{estado.veladosHoy} velados hoy</span>
-            {estado.colaTamano > 0 && (
-              <span
-                className="text-ink-dim/70"
-                title={`${estado.colaTamano} artículos esperan velatorio`}
-              >
-                {"✝".repeat(Math.min(estado.colaTamano, 6))}
-                {estado.colaTamano > 6 && `+${estado.colaTamano - 6}`}
-              </span>
-            )}
-            <button
-              onClick={alternarSonido}
-              aria-label={sonido ? "Silenciar la capilla" : "Escuchar la capilla"}
-              title={sonido ? "Silenciar la capilla" : "Escuchar la capilla"}
-              className="text-ink-dim hover:text-candle transition-colors text-sm"
-            >
-              {sonido ? "♪" : "🔇"}
-            </button>
-          </span>
-        </header>
+    <div className="nave flex-1 flex flex-col min-h-0">
+      <header className="flex flex-wrap items-baseline gap-x-6 gap-y-2.5 px-[22px] py-3.5 border-b-2 border-ink text-[11px] tracking-[0.06em] text-ink-dim">
+        <div className="font-lapida text-xl tracking-[0.14em] text-ink">
+          RÉQUIEM<span className="text-ink-faint">.WIKI</span>
+        </div>
+        <div className="text-[10px] text-ink-faint">esquelas en directo · edición permanente</div>
+        <div className="text-[10px] text-ink-faint capitalize">{fechaHoy}</div>
+        <div className="flex-1" />
+        <div>
+          <span className={`punto-vivo ${conectado ? "text-live" : "text-gold"}`}>●</span>{" "}
+          {conectado ? "en directo" : "conexión degradada"}
+        </div>
+        <div>
+          <span className="text-ink">{estado.veladosHoy}</span> velados hoy
+        </div>
+        <div>
+          <span className="text-ink">{estado.colaTamano}</span> almas esperan turno
+        </div>
+        <button
+          onClick={() => setSonido((s) => !s)}
+          className="border border-mourning rounded-full text-ink-dim text-[10px] px-3 py-1.5 hover:border-ink hover:text-ink transition-colors whitespace-nowrap"
+        >
+          sonido · {sonido ? "on" : "off"}
+        </button>
+      </header>
 
-        {necrologica && (
-          <div className="mx-4 mb-2 border border-gold/40 bg-bg-raised px-4 py-2.5 text-xs text-ink shrink-0">
-            <span className="text-candle">✝ </span>
-            Ha muerto un artículo en tu idioma: «{necrologica}»
+      {degradada && (
+        <div className="text-center px-4 py-2 bg-[#ddd4c2] border-b border-[#b5aa93] text-gold text-[11px]">
+          ○ Conexión degradada — sigues viendo el funeral, pero no puedes participar.
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-wrap items-stretch min-h-0">
+        <div className="flex-1 basis-[620px] min-w-0 flex flex-col items-center relative px-5 pt-7 pb-[18px]">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none z-[5]">
+            <Flores flores={flores} />
           </div>
-        )}
+          <div
+            key={campanadaKey}
+            className="absolute inset-0 pointer-events-none campanada"
+            style={{
+              background:
+                "radial-gradient(700px 420px at 50% 30%, rgba(33,29,23,.14), transparent 70%)",
+            }}
+          />
 
-        <main className="relative flex-1 flex items-center justify-center px-4 py-6 min-h-0 overflow-y-auto">
-          <Flores flores={flores} />
-          <Feretro estado={estado} elegia={elegia} escribiendo={escribiendo} />
-        </main>
+          <Feretro
+            estado={estado}
+            elegia={elegia}
+            escribiendo={escribiendo}
+            pensando={pensando}
+            esperaSegundos={esperaSeg}
+          />
 
-        <div className="flex justify-center gap-3 py-3 shrink-0">
-          {OFRENDAS.map((o) => (
-            <button
-              key={o.tipo}
-              onClick={() => ofrendar(o.tipo)}
-              title={o.etiqueta}
-              aria-label={o.etiqueta}
-              className="text-2xl w-12 h-12 rounded-full border border-mourning hover:border-gold/50 hover:bg-bg-raised transition-colors active:scale-90"
-            >
-              {o.glifo}
-            </button>
-          ))}
+          <div className="flex-1 min-h-3.5" />
+
+          <div className="flex flex-col items-center gap-1.5 mb-[18px] max-w-full">
+            <div className="text-[9px] tracking-[0.22em] text-ink-faint">DOLIENTES PRESENTES</div>
+            {modoRecuento ? (
+              <div className="flex items-center gap-3">
+                <div
+                  className="llama w-[11px] h-4"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 50% 75%, var(--candle) 0%, var(--candle-deep) 55%, transparent 78%)",
+                    borderRadius: "50% 50% 50% 50% / 62% 62% 38% 38%",
+                  }}
+                />
+                <div className="font-lapida text-[22px] text-ink">
+                  {numeroVelas}{" "}
+                  <span className="text-sm text-ink-dim">dolientes velan en este momento</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap justify-center gap-x-2.5 gap-y-3.5 max-w-[600px]">
+                {dolientes?.map((d) => (
+                  <Vela key={d.id} nombre={d.nombre} esTuya={d.esYo} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2.5 pb-1">
+            {OFRENDAS.map((o) => (
+              <button
+                key={o.tipo}
+                onClick={() => ofrendar(o.tipo)}
+                disabled={degradada}
+                title={o.etiqueta}
+                className="flex items-center gap-2.5 min-h-12 px-5 bg-bg-raised border border-ink rounded-full text-ink text-xs hover:bg-ink hover:text-bg-raised transition-colors active:scale-[.96] disabled:opacity-35 disabled:pointer-events-none"
+              >
+                {o.tipo === "vela" ? (
+                  <span
+                    className="inline-block w-2 h-3"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 50% 75%, var(--candle) 0%, var(--candle-deep) 55%, transparent 80%)",
+                      borderRadius: "50% 50% 50% 50% / 62% 62% 38% 38%",
+                    }}
+                  />
+                ) : (
+                  <span className={`${o.color} text-[15px]`}>{o.glifo}</span>
+                )}
+                {o.etiqueta}
+                <span className="opacity-50 text-[10px]">
+                  {contadores[o.tipo] || ""}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <footer className="shrink-0 border-t border-mourning px-4 pt-3 pb-4">
-          <div className="flex items-end gap-1 overflow-x-auto pb-1">
-            {dolientes
-              ? dolientes.map((d) => (
-                  <Vela key={d.id} nombre={d.nombre} esTuya={d.esYo} />
-                ))
-              : (
-                <p className="text-xs text-ink-dim py-3">
-                  {numeroVelas} velas encendidas
-                </p>
-              )}
-          </div>
-        </footer>
+        <aside className="flex-1 basis-[300px] min-w-[280px] max-w-[430px] flex flex-col max-h-[45vh] lg:max-h-none">
+          <LibroCondolencias
+            condolencias={condolencias}
+            alFirmar={firmar}
+            deshabilitado={degradada}
+          />
+        </aside>
       </div>
 
-      <aside className="lg:w-80 shrink-0 flex flex-col max-h-[45vh] lg:max-h-none">
-        <LibroCondolencias condolencias={condolencias} alFirmar={firmar} />
-      </aside>
+      {necrologica && (
+        <div className="toast-entra fixed top-16 left-1/2 -translate-x-1/2 z-[60] bg-ink rounded-md px-5 py-3 text-xs text-bg-raised shadow-[0_12px_40px_rgba(33,29,23,.4)] max-w-[90vw] text-center">
+          † Ha muerto un artículo en tu idioma:{" "}
+          <span className="font-lapida italic text-sm">«{necrologica}»</span>
+        </div>
+      )}
     </div>
   );
 }

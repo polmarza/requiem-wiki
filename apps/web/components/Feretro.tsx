@@ -1,88 +1,132 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { EstadoFuneral } from "@/lib/tipos";
 
 interface Props {
   estado: EstadoFuneral;
   elegia: string;
   escribiendo: boolean;
+  pensando: boolean;
+  esperaSegundos: number;
 }
 
 function horaLegible(iso: string | null): string {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleTimeString("es-ES", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
+    return new Date(iso).toLocaleTimeString("es-ES", { hour12: false });
   } catch {
     return "";
   }
 }
 
-export function Feretro({ estado, elegia, escribiendo }: Props) {
+/**
+ * La causa de un borrado real trae sintaxis wiki: [[Enlace]] o [[Enlace|Etiqueta]].
+ * Se muestra como en la propia Wikipedia: el enlace resaltado, sin corchetes.
+ */
+function nodosCausa(texto: string): ReactNode[] {
+  const nodos: ReactNode[] = [];
+  const re = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+  let ultimo = 0;
+  let m: RegExpExecArray | null;
+  let clave = 0;
+
+  while ((m = re.exec(texto))) {
+    if (m.index > ultimo) nodos.push(texto.slice(ultimo, m.index));
+    nodos.push(
+      <span key={clave++} className="text-gold border-b border-dotted border-gold/50">
+        {m[2] || m[1]}
+      </span>,
+    );
+    ultimo = re.lastIndex;
+  }
+  if (ultimo < texto.length) nodos.push(texto.slice(ultimo));
+  return nodos;
+}
+
+export function Feretro({ estado, elegia, escribiendo, pensando, esperaSegundos }: Props) {
   if (estado.fase === "espera" || !estado.titulo) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-        <p className="font-lapida text-2xl italic text-ink-dim">
-          La capilla espera.
-        </p>
-        <p className="text-sm text-ink-dim/70">
-          Nadie ha muerto todavía. No tardará.
-        </p>
+      <div className="flex-1 flex flex-col items-center justify-center gap-[22px] text-center max-w-[440px] mx-auto">
+        <div className="font-lapida text-[34px] text-ink-faint">†</div>
+        <div className="font-lapida text-2xl text-ink-dim">
+          La capilla está en silencio.
+        </div>
+        <div className="text-xs leading-[1.8] text-ink-dim">
+          Ningún artículo ha muerto en los últimos instantes.
+          <br />
+          La próxima esquela puede llegar en cualquier momento.
+        </div>
+        <div className="text-[10px] tracking-[0.1em] text-ink-faint punto-vivo">
+          esperando el stream de Wikimedia · último funeral hace {esperaSegundos} s
+        </div>
       </div>
     );
   }
 
   // Cumplido el duelo mínimo, el féretro se queda mientras no haya relevo.
   const velandoSinRelevo = estado.fase === "duelo" && estado.colaTamano === 0;
+  const hayElegia = elegia.length > 0;
 
   return (
     <div
       key={estado.id}
-      className="entra-feretro w-full max-w-2xl mx-auto text-center"
+      className={`w-full ${estado.fase === "cierre" ? "sale-feretro" : "entra-feretro"}`}
     >
-      <div className="border border-gold/35 bg-bg-raised/80 px-6 py-8 sm:px-12 sm:py-10 shadow-[0_0_60px_-20px_var(--candle-glow)]">
-        <div className="text-[10px] uppercase tracking-[0.28em] text-ink-dim mb-5">
-          {estado.dominio}
-        </div>
+      <div className="w-full max-w-[620px] mx-auto bg-ink p-1.5 shadow-[0_18px_44px_-26px_rgba(33,29,23,.55)]">
+        <div className="bg-bg-raised border border-ink px-7 sm:px-8 py-6 sm:py-7 text-center">
+          <div className="font-lapida text-2xl leading-none text-ink">†</div>
 
-        <h1 className="font-lapida text-3xl sm:text-5xl leading-tight text-ink mb-5 break-words">
-          {estado.titulo}
-        </h1>
+          <h1 className="font-lapida font-medium text-[clamp(24px,4.6vw,42px)] leading-[1.18] my-3.5 text-ink text-balance break-words">
+            {estado.titulo}
+          </h1>
 
-        <div className="w-14 h-px bg-gold/45 mx-auto mb-5" />
-
-        <p className="text-xs text-ink-dim leading-relaxed max-w-lg mx-auto">
-          <span className="text-ink-dim/60">Causa de la muerte: </span>
-          <span className="italic">{estado.causa}</span>
-        </p>
-        <p className="text-[11px] text-ink-dim/60 mt-2">
-          Hora de la defunción: {horaLegible(estado.horaMuerte)}
-        </p>
-
-        {(estado.fase === "elegia" || estado.fase === "duelo" || estado.fase === "cierre") && (
-          <div className="mt-8 pt-7 border-t border-mourning min-h-[7rem]">
-            <p
-              className={`font-lapida italic text-lg sm:text-xl leading-relaxed text-ink/90 ${
-                escribiendo ? "pluma" : ""
-              }`}
-            >
-              {elegia || (
-                <span className="text-ink-dim not-italic text-sm">
-                  El oficiante medita…
-                </span>
-              )}
-            </p>
+          <div className="font-lapida italic text-[15px] text-ink-dim mb-4.5">
+            Falleció a las {horaLegible(estado.horaMuerte)} en {estado.dominio}
           </div>
+
+          <div className="w-16 h-px bg-ink mx-auto mb-3.5" />
+
+          <div className="text-[9px] tracking-[0.22em] text-ink-faint mb-2">
+            CAUSA DE LA DEFUNCIÓN, SEGÚN EL REGISTRO
+          </div>
+          <div className="text-[11.5px] leading-[1.7] text-ink-dim max-w-[500px] mx-auto text-pretty">
+            {nodosCausa(estado.causa ?? "")}
+          </div>
+
+          <div className="font-lapida text-[17px] tracking-[0.32em] mt-5 text-ink">
+            D. E. P.
+          </div>
+          <div className="font-lapida italic text-[13px] text-ink-dim mt-1.5">
+            Sus dolientes, presentes en esta capilla, no lo olvidan.
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[560px] mx-auto mt-6 text-center min-h-[96px] px-1.5">
+        {pensando && (
+          <div className="text-[10px] tracking-[0.16em] text-ink-faint punto-vivo">
+            LA OFICIANTE PREPARA LA ELEGÍA…
+          </div>
+        )}
+        {hayElegia && (
+          <>
+            <div className="text-[9px] tracking-[0.22em] text-ink-faint mb-3">
+              ELEGÍA
+              {escribiendo && <span className="text-gold"> · escribiéndose ahora</span>}
+            </div>
+            <div className="font-lapida italic text-[19px] leading-[1.75] text-ink text-pretty">
+              {elegia}
+              {escribiendo && <span className="pluma" />}
+            </div>
+          </>
         )}
       </div>
 
       {velandoSinRelevo && (
-        <p className="mt-5 text-[11px] text-ink-dim/60 italic">
-          Seguimos velándole hasta que llegue el siguiente.
-        </p>
+        <div className="mt-4 mx-auto w-fit text-[10px] tracking-[0.08em] text-ink-faint border border-mourning rounded-full px-3.5 py-1.5">
+          El velatorio se prolonga — se sigue velando al mismo difunto
+        </div>
       )}
     </div>
   );
