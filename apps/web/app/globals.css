@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0d0b09;
+  --bg-raised: #171310;
+  --candle: #f5a623;
+  --candle-alta: #ffd9a0;
+  --candle-glow: rgba(245, 166, 35, 0.14);
+  --ink: #e8e0d1;
+  --ink-dim: #8a8070;
+  --gold: #b08d3f;
+  --mourning: #2b2320;
+  --rose: #c96f6f;
+  --live: #7da87b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-candle: var(--candle);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-gold: var(--gold);
+  --color-mourning: var(--mourning);
+  --color-rose: var(--rose);
+  --color-live: var(--live);
+  --font-lapida: var(--font-cormorant);
+  --font-cuerpo: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
 }
+
+/* La capilla respira: un halo de vela que late muy despacio al fondo. */
+.nave {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 42%, var(--candle-glow), transparent 70%),
+    radial-gradient(ellipse 120% 80% at 50% 120%, rgba(176, 141, 63, 0.06), transparent 60%),
+    var(--bg);
+}
+
+@keyframes titilar {
+  0%, 100% { opacity: 1; transform: scaleY(1) translateY(0); }
+  25% { opacity: 0.82; transform: scaleY(1.08) translateY(-1px); }
+  50% { opacity: 0.95; transform: scaleY(0.96) translateY(0.5px); }
+  75% { opacity: 0.86; transform: scaleY(1.04) translateY(-0.5px); }
+}
+
+.llama {
+  animation: titilar 2.4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes procesion {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.entra-feretro {
+  animation: procesion 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes caer-flor {
+  0% { opacity: 0; transform: translateY(-40px) rotate(0deg); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(230px) rotate(var(--giro, 40deg)); }
+}
+
+.flor-cae {
+  animation: caer-flor 3.4s cubic-bezier(0.4, 0, 0.7, 1) forwards;
+}
+
+@keyframes humo {
+  from { opacity: 0.5; transform: translateY(0) scaleX(1); }
+  to { opacity: 0; transform: translateY(-22px) scaleX(1.9); }
+}
+
+.se-apaga {
+  animation: humo 1.4s ease-out forwards;
+}
+
+@keyframes latido-vivo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.punto-vivo {
+  animation: latido-vivo 2s ease-in-out infinite;
+}
+
+/* El cursor del oficiante mientras escribe la elegía. */
+@keyframes parpadeo-pluma {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+}
+
+.pluma::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  background: var(--gold);
+  animation: parpadeo-pluma 1.1s steps(1) infinite;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--mourning); border-radius: 3px; }
