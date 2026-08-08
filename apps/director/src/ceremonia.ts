@@ -5,9 +5,17 @@ import type { Difunto, EstadoFuneral, FaseCeremonia } from "./tipos.js";
 
 /** Duración de cada fase, en milisegundos. */
 const PROCESION = 3_000;
-const DUELO = 40_000;
+/** Respeto mínimo debido a cualquier difunto, aunque haya cola esperando. */
+const DUELO_MINIMO = 25_000;
+/**
+ * Mueren ~0.7 artículos por minuto: menos de lo que dura una ceremonia. En vez
+ * de dejar la capilla vacía entre funeral y funeral, el duelo se alarga hasta
+ * que llega el siguiente difunto. Nadie se queda solo, y quien entra siempre
+ * encuentra un féretro.
+ */
+const DUELO_MAXIMO = 240_000;
 const CIERRE = 2_500;
-const ESPERA_SI_VACIA = 6_000;
+const LATIDO = 2_000;
 /** Los chunks de elegía van ephemeral; sin throttle saturaríamos el canal. */
 const THROTTLE_ELEGIA = 400;
 
@@ -64,11 +72,28 @@ export class Ceremonia {
 
       if (!difunto) {
         if (this.#fase !== "espera") await this.#anunciar("espera");
-        await dormir(ESPERA_SI_VACIA);
+        await dormir(LATIDO);
         continue;
       }
 
       await this.#oficiar(difunto);
+    }
+  }
+
+  /**
+   * El duelo dura lo que haga falta: cumplido el mínimo, se sostiene mientras no
+   * haya nadie esperando turno. Así la capilla nunca se queda sin féretro.
+   */
+  async #velar(): Promise<void> {
+    const inicio = Date.now();
+    await dormir(DUELO_MINIMO);
+
+    while (
+      this.#corriendo &&
+      this.#cola.tamano === 0 &&
+      Date.now() - inicio < DUELO_MAXIMO
+    ) {
+      await dormir(LATIDO);
     }
   }
 
@@ -97,7 +122,7 @@ export class Ceremonia {
     await publicar("elegia.completa", { funeralId: difunto.id, texto: elegia });
 
     await this.#anunciar("duelo");
-    await dormir(DUELO);
+    await this.#velar();
 
     this.#veladosHoy++;
     await this.#anunciar("cierre");

@@ -35,6 +35,9 @@ export function Feretro({ estado, elegia, escribiendo }: Props) {
     );
   }
 
+  // Cumplido el duelo mínimo, el féretro se queda mientras no haya relevo.
+  const velandoSinRelevo = estado.fase === "duelo" && estado.colaTamano === 0;
+
   return (
     <div
       key={estado.id}
@@ -75,6 +78,12 @@ export function Feretro({ estado, elegia, escribiendo }: Props) {
           </div>
         )}
       </div>
+
+      {velandoSinRelevo && (
+        <p className="mt-5 text-[11px] text-ink-dim/60 italic">
+          Seguimos velándole hasta que llegue el siguiente.
+        </p>
+      )}
     </div>
   );
 }

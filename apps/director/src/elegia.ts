@@ -15,7 +15,14 @@ Reglas:
 - No inventes datos concretos sobre el contenido del artículo: solo sabes su título
   y por qué lo borraron. Puedes imaginar con delicadeza, nunca afirmar.
 - Si el título es opaco o técnico, la elegía va sobre la oscuridad de esa vida.
-- Termina con una frase que se pueda leer como epitafio.`;
+- Termina con una frase que se pueda leer como epitafio.
+
+Casi todos los difuntos llegan de wikis en otros idiomas. Si el título no está en
+español, tradúcelo dentro de la elegía con naturalidad, como quien presenta al
+difunto a los que no lo conocían: los dolientes no pueden llorar por un nombre que
+no entienden. No hagas una nota de traductor; hazlo parte del duelo.
+Ejemplo del tono buscado: «Se llamaba Пісочниця, que en ucraniano quiere decir
+arenero. Un sitio donde se juega a construir sabiendo que no durará.»`;
 
 /** Si Claude falla o tarda, la ceremonia sigue: nadie se queda sin despedida. */
 function elegiaDeRespaldo(difunto: Difunto): string {
