@@ -44,3 +44,19 @@ El director solo publica en el canal de Portal, no lo escucha, así que
 contarlos de verdad el director tendría que suscribirse también al canal
 `capilla` (o leer un resumen que el propio canal exponga) y acumular por
 `funeralId` mientras dura el duelo.
+
+### [MEJORA-04] "Velados hoy" se resetea a 0 en cada reinicio del director
+**Área:** Backend
+**Prioridad estimada:** Alta (antes de la demo)
+**Origen:** Detectado en pruebas manuales el 2026-08-08 tras varios reinicios
+del director durante el desarrollo — el contador que veían los dolientes saltó
+de 37 a 0 sin que hubiera pasado un día real.
+
+`Ceremonia#veladosHoy` es un contador en memoria (`ceremonia.ts`), así que un
+redeploy o un crash del director lo pone a 0 aunque Supabase (`funerales`,
+vía `archivo.ts`) conserve el histórico real. Rompe la promesa del PRD/
+design-system de "contador que solo crece". Arreglo correcto: al arrancar,
+el director debe leer `SELECT count(*) FROM funerales WHERE velado_en >=
+hoy` de Supabase e inicializar `veladosHoy` con ese valor en vez de 0.
+Bloqueado por lo mismo que MEJORA-03: necesita que la tabla `funerales`
+exista (ver `apps/director/migrations/001_funerales.sql`).
