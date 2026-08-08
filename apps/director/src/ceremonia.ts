@@ -1,3 +1,4 @@
+import { archivarFuneral } from "./archivo.js";
 import { ColaDifuntos } from "./cola.js";
 import { recitarElegia } from "./elegia.js";
 import { publicar } from "./portal.js";
@@ -126,6 +127,10 @@ export class Ceremonia {
 
     this.#veladosHoy++;
     await this.#anunciar("cierre");
+    // El director no escucha el canal (solo publica), así que aún no cuenta
+    // flores ni dolientes reales: se archivan a 0 hasta que se cablee esa
+    // lectura. Ver mejoras/backlog.md.
+    void archivarFuneral({ difunto, elegia, flores: 0, dolientesMax: 0 });
     await dormir(CIERRE);
 
     this.#actual = null;

@@ -33,3 +33,14 @@ dominios caducados, repos archivados de GitHub, tweets borrados. Post-hackathon.
 
 Si el canal global se quedara pequeño o el público lo pidiera, capillas por idioma
 (es, en, fr…) filtrando el stream por wiki de origen.
+
+### [MEJORA-03] Archivar flores y dolientes reales por funeral
+**Área:** Backend
+**Prioridad estimada:** Media
+**Origen:** Implementación de `archivo.ts` (2026-08-08)
+
+El director solo publica en el canal de Portal, no lo escucha, así que
+`funerales.flores` y `funerales.dolientes_max` se archivan siempre a 0. Para
+contarlos de verdad el director tendría que suscribirse también al canal
+`capilla` (o leer un resumen que el propio canal exponga) y acumular por
+`funeralId` mientras dura el duelo.
