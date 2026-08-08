@@ -2,6 +2,7 @@
 
 import { useChannel } from "@portalsdk/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { arrancarOrgano, pararOrgano, tanerCampana } from "@/lib/campanas";
 import { CANAL_CAPILLA } from "@/lib/portal";
 import { ESTADO_INICIAL, type EstadoFuneral, type TipoReaccion } from "@/lib/tipos";
 import { Feretro } from "./Feretro";
@@ -25,6 +26,7 @@ export function Capilla({ nombre }: { nombre: string }) {
   const [chunkElegia, setChunkElegia] = useState<{ id: string; texto: string } | null>(null);
   const [flores, setFlores] = useState<FlorCayendo[]>([]);
   const [necrologica, setNecrologica] = useState<string | null>(null);
+  const [sonido, setSonido] = useState(false);
   const contadorFlor = useRef(0);
 
   const alMensaje = useCallback((msg: {
@@ -108,6 +110,26 @@ export function Capilla({ nombre }: { nombre: string }) {
       : "Réquiem.wiki — el velatorio del conocimiento";
   }, [necrologica]);
 
+  // La campana suena cuando entra un féretro nuevo, no en cada cambio de fase.
+  const ultimoTanido = useRef<string | null>(null);
+  useEffect(() => {
+    if (!sonido || !estado.id || estado.fase !== "procesion") return;
+    if (ultimoTanido.current === estado.id) return;
+    ultimoTanido.current = estado.id;
+    tanerCampana();
+  }, [estado.id, estado.fase, sonido]);
+
+  function alternarSonido() {
+    if (sonido) {
+      pararOrgano();
+      setSonido(false);
+    } else {
+      arrancarOrgano();
+      tanerCampana();
+      setSonido(true);
+    }
+  }
+
   const dolientes = useMemo(() => {
     if (presence?.kind !== "detailed") return null;
     return presence.participants.map((p) => ({
@@ -165,9 +187,25 @@ export function Capilla({ nombre }: { nombre: string }) {
             {conectado ? "En directo" : "Velando en silencio"}
           </span>
           <span className="font-lapida text-sm text-ink-dim">Réquiem.wiki</span>
-          <span>
-            {estado.veladosHoy} velados hoy
-            {estado.colaTamano > 0 && ` · ${estado.colaTamano} en espera`}
+          <span className="flex items-center gap-3">
+            <span>{estado.veladosHoy} velados hoy</span>
+            {estado.colaTamano > 0 && (
+              <span
+                className="text-ink-dim/70"
+                title={`${estado.colaTamano} artículos esperan velatorio`}
+              >
+                {"✝".repeat(Math.min(estado.colaTamano, 6))}
+                {estado.colaTamano > 6 && `+${estado.colaTamano - 6}`}
+              </span>
+            )}
+            <button
+              onClick={alternarSonido}
+              aria-label={sonido ? "Silenciar la capilla" : "Escuchar la capilla"}
+              title={sonido ? "Silenciar la capilla" : "Escuchar la capilla"}
+              className="text-ink-dim hover:text-candle transition-colors text-sm"
+            >
+              {sonido ? "♪" : "🔇"}
+            </button>
           </span>
         </header>
 
