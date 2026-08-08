@@ -42,6 +42,17 @@ describe("filtrarBorrado", () => {
     expect("difunto" in filtrarBorrado(ev, { aceptarBorradores: true })).toBe(true);
   });
 
+  it("descarta los eventos canary de comprobación de salud del stream", () => {
+    const ev = evento({
+      meta: { id: "x", domain: "canary", dt: "2026-08-08T03:00:00Z" },
+      page_title: "example page title",
+      comment: "",
+    });
+    expect(filtrarBorrado(ev)).toEqual({
+      descartado: "evento canary (no es un borrado real)",
+    });
+  });
+
   it("descarta redirects", () => {
     expect(filtrarBorrado(evento({ page_is_redirect: true }))).toEqual({
       descartado: "es redirect",

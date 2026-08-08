@@ -59,6 +59,13 @@ export function filtrarBorrado(
     ? [NS_ARTICULO, NS_BORRADOR]
     : [NS_ARTICULO];
 
+  // Wikimedia inyecta eventos sintéticos varias veces por hora para comprobar
+  // que el stream sigue vivo (contenido de ejemplo copiado del esquema). No son
+  // borrados reales: velarlos rompería la regla de no inventar difuntos.
+  if (ev.meta?.domain === "canary") {
+    return { descartado: "evento canary (no es un borrado real)" };
+  }
+
   if (ns === undefined || !nsAceptados.includes(ns)) {
     return { descartado: `namespace ${ns}` };
   }
