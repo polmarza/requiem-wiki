@@ -116,6 +116,19 @@ El late-joiner reconstruye con `history: 30`: el último `funeral.estado` +
 `elegia.completa`/últimos `elegia.chunk` que le lleguen. El director publica
 `funeral.estado` en cada cambio de fase (no por chunk), así el historial es compacto.
 
+⚠️ **Verificado en vivo (2026-08-08):** el endpoint REST
+`GET /v1/channels/{id}/history` devuelve `{"msgs":[],"hasMore":false}` aunque los
+mensajes se hayan publicado por HTTP y tengan `seq` — probado con los dos patrones
+de query que documenta Portal (`?before=&limit=` y `?from=&to=`). El SDK **sí**
+entrega el historial en el snapshot del canal (`portal.channel(id, { history: N })`).
+
+Consecuencia de diseño: **el cliente deriva el estado del array `messages` del hook,
+no del callback `onMessage`**. `onMessage` solo dispara con mensajes nuevos, así que
+un doliente que entra a mitad de ceremonia se quedaría con la capilla vacía. Los
+mensajes persistentes (`funeral.estado`, `elegia.completa`, condolencias) se leen de
+`messages`; el callback se reserva para lo efímero (`elegia.chunk`, `reaccion`,
+`necrologica.es`).
+
 ### Setup (una vez, vía CLI oficial)
 
 ```bash

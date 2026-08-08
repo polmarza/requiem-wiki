@@ -82,6 +82,11 @@ amanecer del "obituario del día".
   muy bajo, apagable; el botón de mute es visible desde el primer segundo (autoplay
   policies: el sonido arranca tras el primer gesto del usuario).
 
+  Ambos se sintetizan con WebAudio en `lib/campanas.ts`, sin archivos de audio: la
+  campana son cinco parciales **inarmónicos** (110/220/262/440/587 Hz con caídas
+  distintas) — la inarmonía es lo que hace que suene a bronce y no a pitido — y el
+  órgano es una quinta justa grave (55/82.4/110 Hz en triangular) a volumen 0.05.
+
 ---
 
 ## Voz y microcopy
